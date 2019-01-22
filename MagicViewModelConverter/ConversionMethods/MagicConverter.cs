@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MagicViewModelConverter.Model;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -27,17 +28,17 @@ namespace MagicViewModelConverter
         {
         }
 
-        private static bool CompatibilityCheck(PropertyInfo[] SrcProp, PropertyInfo[] TrgProp)
+        private static CompatibilityCheckOutcome CompatibilityCheck(PropertyInfo[] SrcProp, PropertyInfo[] TrgProp)
         {
             if (!(SrcProp.Length == TrgProp.Length))
-                return false;
+                return new CompatibilityCheckOutcome(false, "The object provided have a different number of public properties");
 
             int NumOfIdenticalFields = SrcProp.Where(x => TrgProp.Select(y => y.Name).Contains(x.Name)).Count();
 
             if (!(SrcProp.Length == NumOfIdenticalFields))
-                return false;
+                return new CompatibilityCheckOutcome(false, "Seems that the Target object miss some public property of the source");
 
-            return true;
+            return new CompatibilityCheckOutcome(true, "");
         }
 
         //https://stackoverflow.com/questions/6884653/how-to-make-a-generic-type-cast-function
@@ -52,9 +53,9 @@ namespace MagicViewModelConverter
             PropertyInfo[] SrcProperties = SrcType.GetProperties();
 
             Type TrgType = target.GetType();
-            PropertyInfo[] TrgProp = TrgType.GetProperties();
+            PropertyInfo[] TrgProps = TrgType.GetProperties();
 
-            if (!CompatibilityCheck(SrcProperties, TrgProp))
+            if (!CompatibilityCheck(SrcProperties, TrgProps).outcome)
             {
                 //adesso ci penso...
             }
@@ -64,36 +65,44 @@ namespace MagicViewModelConverter
                 var SourceVal = srcProp.GetValue(source);
                 Type SourceType = srcProp.PropertyType;
 
-                Type TargetType = TrgProp.Where(x => x.Name == srcProp.Name).FirstOrDefault().PropertyType;
-                PropertyInfo Trgprop = TrgProp.FirstOrDefault(x => x.Name == srcProp.Name);
+                Type TargetType = TrgProps.Where(x => x.Name == srcProp.Name).FirstOrDefault().PropertyType;
+                PropertyInfo Trgprop = TrgProps.FirstOrDefault(x => x.Name == srcProp.Name);
+                ExcplicitConversion(target, SourceVal, SourceType, TargetType, Trgprop);
+            }
+        }
 
-                if (SourceType == TargetType)
-                {
-                    Trgprop.SetValue(target, SourceVal);
-                }
-                else if (SourceType == Type.GetType("System.DateTime") && TargetType == Type.GetType("System.String"))
-                {
-                    DateTime dt = (DateTime)SourceVal;
-                    Trgprop.SetValue(target, dt.ToString(DateFormat));
-                }
-                else if (SourceType == Type.GetType("System.String") && TargetType == Type.GetType("System.DateTime"))
-                {
-                    string dt = (string)SourceVal;
-                    DateTime res = new DateTime();
+        private void ExcplicitConversion(object target, object SourceVal, Type SourceType, Type TargetType, PropertyInfo Trgprop)
+        {
+            if (SourceType == TargetType)
+            {
+                Trgprop.SetValue(target, SourceVal);
+            }
+            else if (SourceType == Type.GetType("System.DateTime") && TargetType == Type.GetType("System.String"))
+            {
+                DateTime dt = (DateTime)SourceVal;
+                Trgprop.SetValue(target, dt.ToString(DateFormat));
+            }
+            else if (SourceType == Type.GetType("System.String") && TargetType == Type.GetType("System.DateTime"))
+            {
+                string dt = (string)SourceVal;
+                DateTime res = new DateTime();
 
-                    if (DateTime.TryParseExact(dt.Trim(), DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out res))
-                        Trgprop.SetValue(target, res);
-                    else
-                    {
-                        string error = "ERROR - parsing string to DateTime (" + dt + " with format: " + DateFormat + " )";
-                        throw new FormatException(error);
-                    }
-                }
+                if (DateTime.TryParseExact(dt.Trim(), DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out res))
+                    Trgprop.SetValue(target, res);
                 else
                 {
-                    //Trgprop.SetValue(target, (typeof(target))SourceVal);
-                    throw new UnhandledConversion(SourceType.Name, TargetType.Name);
+                    string error = "ERROR - parsing string to DateTime (" + dt + " with format: " + DateFormat + " )";
+                    throw new FormatException(error);
                 }
+            }
+            else if (SourceType == Type.GetType("System.Int32") && TargetType == Type.GetType("System.DateTime"))
+            {
+            }
+            else
+            {
+                
+                //Trgprop.SetValue(target, (typeof(target))SourceVal);
+                throw new UnhandledConversion(SourceType.Name, TargetType.Name);
             }
         }
     }

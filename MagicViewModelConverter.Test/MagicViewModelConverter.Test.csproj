@@ -46,7 +46,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Test.cs" />
+    <Compile Include="GenericConverterCustomBehaviorTest.cs" />
+    <Compile Include="MethodsTest.cs" />
     <Compile Include="MockDbClass\DB_OBJ.cs" />
     <Compile Include="MockVmClass\VM_OBJ.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

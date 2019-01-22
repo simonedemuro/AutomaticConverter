@@ -7,19 +7,28 @@ using System.Threading.Tasks;
 using MagicViewModelConverter.Test.Mock;
 using NUnit.Framework;
 using MagicViewModelConverter.ConversionMethods;
+using System.Diagnostics.CodeAnalysis;
 
 namespace MagicViewModelConverter.Test
 {
     [TestFixture]
-    public class Test
+    public class MethodsTest
     {
         [Test]
+        /// <summary>
+        /// GenericCast.Cast provides an easy way to cast every compatible type to Object 
+        /// </summary> 
         public void GenericConversions()
         {
-            int a = 1; a.GetType();
+            // SETUP
+            int a = 1;
             double b=0;
+
+            // EXERCISE
             object c = GenericCast.Cast(b.GetType(), a);
-            Console.Write(b);
+
+            // ASSERT
+            Assert.That(Convert.ToInt32(c) == 1);
         }
 
         [Test]
@@ -29,18 +38,17 @@ namespace MagicViewModelConverter.Test
         /// </summary>
         public void ThrowUnhandledException()
         {
+            // SETUP
             DB_OBJ DbObject = new DB_OBJ() { Id = 1, Field01 = 55, Timestamp = DateTime.Now };
             VM_OBJ VmObject = new VM_OBJ();
-
+            
             MagicConverter magicConverter = new MagicConverter("dd/MM/yyyy HH:mm:ss");
-            try
-            {
-                magicConverter.Convert(DbObject, VmObject);
-            }
-            catch (UnhandledConversion ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
+
+            // EXERCISE
+            var ex = Assert.Throws<UnhandledConversion>(() => magicConverter.Convert(DbObject, VmObject));
+
+            // ASSERT
+            Assert.That(ex.Message, Is.EqualTo("Unhandled conversion From Type: Int32 to: Double"));
         }
 
     }

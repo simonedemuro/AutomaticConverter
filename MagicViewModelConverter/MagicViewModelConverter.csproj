@@ -42,6 +42,8 @@
   <ItemGroup>
     <Compile Include="ConversionMethods\GenericCast.cs" />
     <Compile Include="ConversionMethods\MagicConverter.cs" />
+    <Compile Include="MagicClone.cs" />
+    <Compile Include="Model\compatibilityCheckOutcome.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Exceptions\UnhandledConversion.cs" />
   </ItemGroup>
