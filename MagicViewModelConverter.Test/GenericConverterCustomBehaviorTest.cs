@@ -37,9 +37,11 @@ namespace MagicViewModelConverter.Test
         public void PerfomVanillaCompatibleTypeConvertion()
         {
             C1 c1 = new C1() { attr1 = 2, attr2 = "ciao Andrea" };
-            MagicClone<C1, C2> mConv = new MagicClone<C1, C2>(c1, new C2());
+            MagicCloneConverter<C1, C2> mConv = MagicClone
+                .New<C1, C2>()
+                .Create();
 
-            C2 res = mConv.DoTheMagic();
+            C2 res = mConv.DoTheMagic(c1);
 
             Assert.AreEqual(c1.attr1, res.attr1);
         }
@@ -49,15 +51,16 @@ namespace MagicViewModelConverter.Test
         {
             // SETUP
             Aclass aclass = new Aclass() { attr1 = 5 };
-            Bclass bclass;
 
-            MagicClone<Aclass, Bclass> mConv = new MagicClone<Aclass, Bclass>(aclass, new Bclass());
+            MagicCloneConverter<Aclass, Bclass> mConv = MagicClone.New<Aclass, Bclass>()
+                //.AddBehaviour<int, float>(a => a * 0.5f)
+                .AddBehaviour<int, float>(a => dummyBehave(a))
+                .Create();
 
             Dictionary<string, Func<Object, Object>>  behaviors = new Dictionary<string, Func<Object, Object>>();
-            mConv.AddConvertionBehavior("System.Int32->System.Single", (f) => dummyBehave(f));
 
             // EXERCISE
-            bclass = mConv.DoTheMagic();
+            Bclass bclass = mConv.DoTheMagic(aclass);
 
             // ASSERT
             Assert.AreEqual(
